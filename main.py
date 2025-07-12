@@ -29,28 +29,36 @@ class DisneyAPI:
         
     async def login(self):
         """Authenticate with Disney API"""
-        self.session = aiohttp.ClientSession()
-        
-        # Disney login flow - this is simplified and may need adjustment
-        login_url = f"{self.base_url}/authentication/login"
-        
-        login_data = {
-            "loginValue": self.username,
-            "password": self.password
-        }
-        
         try:
-            async with self.session.post(login_url, json=login_data) as response:
+            self.session = aiohttp.ClientSession()
+            
+            # Disney login flow - this is simplified and may need adjustment
+            login_url = f"{self.base_url}/authentication/login"
+            
+            login_data = {
+                "loginValue": self.username,
+                "password": self.password
+            }
+            
+            logger.info(f"Attempting Disney login for user: {self.username}")
+            
+            async with self.session.post(login_url, json=login_data, timeout=aiohttp.ClientTimeout(total=15)) as response:
+                logger.info(f"Disney login response status: {response.status}")
                 if response.status == 200:
                     data = await response.json()
                     self.access_token = data.get('access_token')
                     logger.info("Successfully logged into Disney API")
                     return True
                 else:
-                    logger.error(f"Login failed: {response.status}")
+                    logger.error(f"Disney login failed with status: {response.status}")
+                    response_text = await response.text()
+                    logger.error(f"Response: {response_text[:200]}...")
                     return False
+        except asyncio.TimeoutError:
+            logger.error("Disney login timeout")
+            return False
         except Exception as e:
-            logger.error(f"Login error: {e}")
+            logger.error(f"Disney login error: {e}")
             return False
     
     async def get_locations(self) -> List[Dict]:
@@ -508,14 +516,22 @@ class DisneyDiningBot(commands.Bot):
         """Set up the bot"""
         logger.info("Bot setup hook started")
         try:
-            await self.disney_api.login()
-            logger.info("Disney API login completed")
-            self.availability_checker.start()
-            logger.info("Availability checker started")
-            logger.info("Bot setup complete")
+            # Try Disney login but don't let it block the bot startup
+            logger.info("Attempting Disney API login...")
+            login_success = await asyncio.wait_for(self.disney_api.login(), timeout=30.0)
+            if login_success:
+                logger.info("Disney API login successful")
+            else:
+                logger.warning("Disney API login failed - will retry during availability checks")
+        except asyncio.TimeoutError:
+            logger.warning("Disney API login timed out - will retry later")
         except Exception as e:
-            logger.error(f"Setup hook error: {e}")
-            # Don't fail completely, just log the error
+            logger.error(f"Disney API login error: {e} - will retry later")
+        
+        # Start availability checker regardless of Disney login status
+        self.availability_checker.start()
+        logger.info("Availability checker started")
+        logger.info("Bot setup complete")
     
     async def on_ready(self):
         """Called when bot is ready"""
