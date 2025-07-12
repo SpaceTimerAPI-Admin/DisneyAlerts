@@ -2,6 +2,7 @@ services:
   - type: worker
     name: disney-dining-bot
     env: python
+    runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: python main.py
     envVars:
@@ -11,7 +12,3 @@ services:
         sync: false
       - key: DISNEY_PASSWORD
         sync: false
-    disk:
-      name: disney-bot-disk
-      mountPath: /opt/render/project/src
-      sizeGB: 1
