@@ -1,16 +1,22 @@
-import pkg from 'discord.js';
-const { Client, Collection, GatewayIntentBits } = pkg;
+import { Client, Collection, GatewayIntentBits } from 'discord.js';
+import fs from 'fs';
+import path from 'path';
 import dotenv from 'dotenv';
 dotenv.config();
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 client.commands = new Collection();
 
-// Load command handlers
-import { requestCommand } from './commands/request.js';
-client.commands.set(requestCommand.data.name, requestCommand);
+const commandsPath = path.join(__dirname, 'commands');
+const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+for (const file of commandFiles) {
+  const command = await import(path.join(commandsPath, file));
+  if (command.data && command.execute) {
+    client.commands.set(command.data.name, command);
+  }
+}
 
-client.on('ready', () => {
+client.once('ready', () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 });
 
@@ -20,9 +26,9 @@ client.on('interactionCreate', async interaction => {
   if (!command) return;
   try {
     await command.execute(interaction);
-  } catch (err) {
-    console.error(err);
-    await interaction.reply({ content: 'An error occurred.', ephemeral: true });
+  } catch (error) {
+    console.error(error);
+    await interaction.reply({ content: 'There was an error executing that command.', ephemeral: true });
   }
 });
 
