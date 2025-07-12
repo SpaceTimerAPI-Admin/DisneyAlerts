@@ -8,6 +8,10 @@ from datetime import datetime, timedelta
 import sqlite3
 from typing import Dict, List, Optional
 import logging
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -502,9 +506,16 @@ class DisneyDiningBot(commands.Bot):
         
     async def setup_hook(self):
         """Set up the bot"""
-        await self.disney_api.login()
-        self.availability_checker.start()
-        logger.info("Bot setup complete")
+        logger.info("Bot setup hook started")
+        try:
+            await self.disney_api.login()
+            logger.info("Disney API login completed")
+            self.availability_checker.start()
+            logger.info("Availability checker started")
+            logger.info("Bot setup complete")
+        except Exception as e:
+            logger.error(f"Setup hook error: {e}")
+            # Don't fail completely, just log the error
     
     async def on_ready(self):
         """Called when bot is ready"""
@@ -654,6 +665,10 @@ if __name__ == "__main__":
     # Make sure to set these environment variables
     DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
     
+    print(f"Discord token present: {bool(DISCORD_TOKEN)}")
+    print(f"Disney username present: {bool(os.getenv('DISNEY_USERNAME'))}")
+    print(f"Disney password present: {bool(os.getenv('DISNEY_PASSWORD'))}")
+    
     if not DISCORD_TOKEN:
         logger.error("DISCORD_TOKEN environment variable not set")
         exit(1)
@@ -662,4 +677,9 @@ if __name__ == "__main__":
         logger.error("Disney credentials not set in environment variables")
         exit(1)
     
-    bot.run(DISCORD_TOKEN)
+    print("Starting bot...")
+    try:
+        bot.run(DISCORD_TOKEN)
+    except Exception as e:
+        logger.error(f"Bot failed to start: {e}")
+        exit(1)
