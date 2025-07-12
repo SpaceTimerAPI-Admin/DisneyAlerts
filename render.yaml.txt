@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: disney-dining-bot
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: DISNEY_USERNAME
+        sync: false
+      - key: DISNEY_PASSWORD
+        sync: false
+    disk:
+      name: disney-bot-disk
+      mountPath: /opt/render/project/src
+      sizeGB: 1

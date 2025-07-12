@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  disney-bot:
+    build: .
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - DISNEY_USERNAME=${DISNEY_USERNAME}
+      - DISNEY_PASSWORD=${DISNEY_PASSWORD}
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    container_name: disney-dining-bot
