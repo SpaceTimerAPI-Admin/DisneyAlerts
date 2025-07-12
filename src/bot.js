@@ -1,3 +1,9 @@
+console.log('🐭 Starting DisneyDiningAlertBot…');
+console.log('🔑 Token is', !!process.env.DISCORD_BOT_TOKEN);
+client.login(process.env.DISCORD_BOT_TOKEN);
+console.log('🚀 client.login() returned');
+
+
 import pkg from 'discord.js';
 import { fileURLToPath } from 'url';
 import path from 'path';
