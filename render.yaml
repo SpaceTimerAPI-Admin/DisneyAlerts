@@ -3,6 +3,8 @@ services:
     name: disney-dining-bot
     env: python
     runtime: python
+    region: oregon
+    plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: python main.py
     envVars:
@@ -12,3 +14,7 @@ services:
         sync: false
       - key: DISNEY_PASSWORD
         sync: false
+    disk:
+      name: disney-bot-disk
+      mountPath: /app
+      sizeGB: 1
