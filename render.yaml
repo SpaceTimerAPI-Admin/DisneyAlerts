@@ -1,5 +1,5 @@
 services:
-  - type: web
+  - type: worker
     name: disney-dining-bot
     env: python
     buildCommand: pip install -r requirements.txt
