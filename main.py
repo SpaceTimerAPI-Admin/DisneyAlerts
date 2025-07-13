@@ -557,6 +557,3 @@ class DisneyWebScraper:
                             logger.debug(f"No availability data found for location {location_id}")
                         else:
                             logger.warning(f"Disney availability API returned {response.status} for location {location_id}")
-                            
-                except Exception as location_error:
-                    logger.debug(f"Error checking location {location_id}:
