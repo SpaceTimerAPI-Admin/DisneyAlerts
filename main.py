@@ -361,7 +361,52 @@ class DisneyWebScraper:
                             
                         except json.JSONDecodeError as json_error:
                             logger.error(f"Failed to parse Disney API JSON: {json_error}")
+                            # Disney returned HTML instead of JSON - try to parse HTML
                             response_text = await response.text()
+                            logger.info(f"Disney API returned HTML, attempting to parse...")
+                            
+                            # Parse HTML response for restaurant data
+                            try:
+                                soup = BeautifulSoup(response_text, 'html.parser')
+                                
+                                # Look for restaurant data in various HTML structures
+                                restaurant_elements = soup.find_all(['div', 'article', 'li'], 
+                                                                   class_=re.compile(r'restaurant|dining|facility|card', re.I))
+                                
+                                for element in restaurant_elements:
+                                    # Try to extract restaurant name and ID from HTML
+                                    name_elem = element.find(['h1', 'h2', 'h3', 'h4', 'a'], 
+                                                            class_=re.compile(r'title|name|heading', re.I))
+                                    
+                                    if name_elem:
+                                        restaurant_name = name_elem.get_text(strip=True)
+                                        
+                                        # Look for data attributes or IDs
+                                        restaurant_id = (element.get('data-id') or 
+                                                       element.get('data-restaurant-id') or 
+                                                       element.get('id'))
+                                        
+                                        if not restaurant_id and name_elem.get('href'):
+                                            # Extract ID from URL
+                                            url_parts = name_elem.get('href').strip('/').split('/')
+                                            if url_parts:
+                                                restaurant_id = url_parts[-1]
+                                        
+                                        if restaurant_name and restaurant_id and len(restaurant_name) > 3:
+                                            restaurants.append({
+                                                'id': str(restaurant_id),
+                                                'name': restaurant_name,
+                                                'location_id': location_id,
+                                                'cuisine_type': 'Various',
+                                                'meal_periods': ['Breakfast', 'Lunch', 'Dinner'],
+                                                'accepts_reservations': True
+                                            })
+                                
+                                logger.info(f"Parsed {len(restaurants)} restaurants from HTML")
+                                
+                            except Exception as html_error:
+                                logger.error(f"Failed to parse HTML response: {html_error}")
+                                
                             logger.error(f"Response text (first 200 chars): {response_text[:200]}")
                         
                     elif response.status == 401:
