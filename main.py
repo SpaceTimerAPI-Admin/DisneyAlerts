@@ -59,7 +59,9 @@ class DisneyWebScraper:
             headers=headers,
             connector=connector,
             timeout=timeout,
-            cookie_jar=aiohttp.CookieJar()
+            cookie_jar=aiohttp.CookieJar(),
+            # Add compression support
+            auto_decompress=True
         )
     
     async def login(self):
